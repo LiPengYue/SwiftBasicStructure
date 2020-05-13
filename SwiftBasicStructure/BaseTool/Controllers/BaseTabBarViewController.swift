@@ -14,13 +14,9 @@ class BaseTabBarViewController: UITabBarController, UITabBarControllerDelegate {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        addChildViewController(vc: BaseViewController(), normalImg: "TabBar0_selected",selectedImg: "TabBar0_selected", title: "首页")
-        addChildViewController(vc: BaseViewController(), normalImg: "TabBar0_selected",selectedImg: "TabBar0_selected", title: "我的")
         self.tabBar.isTranslucent = false
         self.tabBar.barTintColor = .white
     }
-    
     
     //  重载添加子视图控制器
     func addChildViewController(vc: UIViewController, normalImg: String, selectedImg: String, title: String) {

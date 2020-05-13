@@ -22,7 +22,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 //        setupRootViewController()
         /// 配置键盘相关
 //        setKeyboardConfig()
-        window?.rootViewController = BaseTabBarViewController()
+        window?.rootViewController = TabBarViewController()
         window?.makeKeyAndVisible()
         return true
     }

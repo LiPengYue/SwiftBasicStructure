@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 50;
+	objectVersion = 51;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -12,10 +12,18 @@
 		869E20A6246A73B9007588B5 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 869E20A4246A73B9007588B5 /* LaunchScreen.storyboard */; };
 		869E20B0246A77EE007588B5 /* BaseTabBarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 869E20AF246A77EE007588B5 /* BaseTabBarViewController.swift */; };
 		869E20B3246A801B007588B5 /* BaseViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 869E20B2246A801B007588B5 /* BaseViewController.swift */; };
+		86B2E897246B90A800D569A1 /* BasePresentVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B2E896246B90A800D569A1 /* BasePresentVC.swift */; };
+		86B2E8A0246B93E600D569A1 /* BasePresentNavigationVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B2E89F246B93E600D569A1 /* BasePresentNavigationVC.swift */; };
+		86B2E8A3246B943200D569A1 /* BaseColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B2E8A2246B943200D569A1 /* BaseColor.swift */; };
+		86B2E8A5246B99C800D569A1 /* BaseSize.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B2E8A4246B99C800D569A1 /* BaseSize.swift */; };
+		86B2E8A8246BAFE100D569A1 /* MainViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B2E8A7246BAFE100D569A1 /* MainViewController.swift */; };
+		86B2E8AB246BB06700D569A1 /* TabBarViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86B2E8AA246BB06700D569A1 /* TabBarViewController.swift */; };
 		86C9FBA9246A94F100D2E5E2 /* BaseNavigationViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C9FBA8246A94F100D2E5E2 /* BaseNavigationViewController.swift */; };
+		D54EFA3FE22AA8E1B1E46ABA /* Pods_SwiftBasicStructure.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CE66B5DCC179B040CD52E031 /* Pods_SwiftBasicStructure.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		75D5DE4389B8F8AAD3C0EE7E /* Pods-SwiftBasicStructure.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftBasicStructure.debug.xcconfig"; path = "Target Support Files/Pods-SwiftBasicStructure/Pods-SwiftBasicStructure.debug.xcconfig"; sourceTree = "<group>"; };
 		869E2096246A73B8007588B5 /* SwiftBasicStructure.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwiftBasicStructure.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		869E2099246A73B8007588B5 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		869E20A2246A73B9007588B5 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -23,7 +31,16 @@
 		869E20A7246A73B9007588B5 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		869E20AF246A77EE007588B5 /* BaseTabBarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseTabBarViewController.swift; sourceTree = "<group>"; };
 		869E20B2246A801B007588B5 /* BaseViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseViewController.swift; sourceTree = "<group>"; };
+		86B2E896246B90A800D569A1 /* BasePresentVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasePresentVC.swift; sourceTree = "<group>"; };
+		86B2E898246B90C300D569A1 /* SwiftBasicStructure-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwiftBasicStructure-Bridging-Header.h"; sourceTree = "<group>"; };
+		86B2E89F246B93E600D569A1 /* BasePresentNavigationVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BasePresentNavigationVC.swift; sourceTree = "<group>"; };
+		86B2E8A2246B943200D569A1 /* BaseColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseColor.swift; sourceTree = "<group>"; };
+		86B2E8A4246B99C800D569A1 /* BaseSize.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseSize.swift; sourceTree = "<group>"; };
+		86B2E8A7246BAFE100D569A1 /* MainViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewController.swift; sourceTree = "<group>"; };
+		86B2E8AA246BB06700D569A1 /* TabBarViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TabBarViewController.swift; sourceTree = "<group>"; };
 		86C9FBA8246A94F100D2E5E2 /* BaseNavigationViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BaseNavigationViewController.swift; sourceTree = "<group>"; };
+		CE66B5DCC179B040CD52E031 /* Pods_SwiftBasicStructure.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SwiftBasicStructure.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		FE1D207C279B3E5473D47ADF /* Pods-SwiftBasicStructure.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SwiftBasicStructure.release.xcconfig"; path = "Target Support Files/Pods-SwiftBasicStructure/Pods-SwiftBasicStructure.release.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -31,17 +48,28 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D54EFA3FE22AA8E1B1E46ABA /* Pods_SwiftBasicStructure.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7FE3AC1C91B144A450233319 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CE66B5DCC179B040CD52E031 /* Pods_SwiftBasicStructure.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		869E208D246A73B8007588B5 = {
 			isa = PBXGroup;
 			children = (
 				869E2098246A73B8007588B5 /* SwiftBasicStructure */,
 				869E2097246A73B8007588B5 /* Products */,
+				C1B2F0C7431EF7B7F597421C /* Pods */,
+				7FE3AC1C91B144A450233319 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -57,6 +85,7 @@
 			isa = PBXGroup;
 			children = (
 				869E20A7246A73B9007588B5 /* Info.plist */,
+				86B2E8A6246BAFCB00D569A1 /* Demo */,
 				869E20AE246A75C2007588B5 /* BaseTool */,
 				869E20AD246A74CD007588B5 /* System */,
 			);
@@ -69,6 +98,7 @@
 				869E20A2246A73B9007588B5 /* Assets.xcassets */,
 				869E20A4246A73B9007588B5 /* LaunchScreen.storyboard */,
 				869E2099246A73B8007588B5 /* AppDelegate.swift */,
+				86B2E898246B90C300D569A1 /* SwiftBasicStructure-Bridging-Header.h */,
 			);
 			path = System;
 			sourceTree = "<group>";
@@ -76,6 +106,7 @@
 		869E20AE246A75C2007588B5 /* BaseTool */ = {
 			isa = PBXGroup;
 			children = (
+				86B2E8A1246B941F00D569A1 /* Theme */,
 				869E20B1246A77F3007588B5 /* Controllers */,
 			);
 			path = BaseTool;
@@ -87,8 +118,45 @@
 				869E20AF246A77EE007588B5 /* BaseTabBarViewController.swift */,
 				86C9FBA8246A94F100D2E5E2 /* BaseNavigationViewController.swift */,
 				869E20B2246A801B007588B5 /* BaseViewController.swift */,
+				86B2E896246B90A800D569A1 /* BasePresentVC.swift */,
+				86B2E89F246B93E600D569A1 /* BasePresentNavigationVC.swift */,
 			);
 			path = Controllers;
+			sourceTree = "<group>";
+		};
+		86B2E8A1246B941F00D569A1 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				86B2E8A2246B943200D569A1 /* BaseColor.swift */,
+				86B2E8A4246B99C800D569A1 /* BaseSize.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		86B2E8A6246BAFCB00D569A1 /* Demo */ = {
+			isa = PBXGroup;
+			children = (
+				86B2E8A9246BB04E00D569A1 /* TabBarController */,
+				86B2E8A7246BAFE100D569A1 /* MainViewController.swift */,
+			);
+			path = Demo;
+			sourceTree = "<group>";
+		};
+		86B2E8A9246BB04E00D569A1 /* TabBarController */ = {
+			isa = PBXGroup;
+			children = (
+				86B2E8AA246BB06700D569A1 /* TabBarViewController.swift */,
+			);
+			path = TabBarController;
+			sourceTree = "<group>";
+		};
+		C1B2F0C7431EF7B7F597421C /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				75D5DE4389B8F8AAD3C0EE7E /* Pods-SwiftBasicStructure.debug.xcconfig */,
+				FE1D207C279B3E5473D47ADF /* Pods-SwiftBasicStructure.release.xcconfig */,
+			);
+			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -98,9 +166,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 869E20AA246A73B9007588B5 /* Build configuration list for PBXNativeTarget "SwiftBasicStructure" */;
 			buildPhases = (
+				C4BAB517E8F4920AB6344F20 /* [CP] Check Pods Manifest.lock */,
 				869E2092246A73B8007588B5 /* Sources */,
 				869E2093246A73B8007588B5 /* Frameworks */,
 				869E2094246A73B8007588B5 /* Resources */,
+				980CBC71C1E5C2D3792D9D3C /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -123,6 +193,7 @@
 				TargetAttributes = {
 					869E2095246A73B8007588B5 = {
 						CreatedOnToolsVersion = 11.3.1;
+						LastSwiftMigration = 1140;
 					};
 				};
 			};
@@ -156,6 +227,48 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		980CBC71C1E5C2D3792D9D3C /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SwiftBasicStructure/Pods-SwiftBasicStructure-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SwiftBasicStructure/Pods-SwiftBasicStructure-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SwiftBasicStructure/Pods-SwiftBasicStructure-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C4BAB517E8F4920AB6344F20 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SwiftBasicStructure-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		869E2092246A73B8007588B5 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -164,7 +277,13 @@
 				869E209A246A73B8007588B5 /* AppDelegate.swift in Sources */,
 				869E20B0246A77EE007588B5 /* BaseTabBarViewController.swift in Sources */,
 				869E20B3246A801B007588B5 /* BaseViewController.swift in Sources */,
+				86B2E8A3246B943200D569A1 /* BaseColor.swift in Sources */,
+				86B2E8A0246B93E600D569A1 /* BasePresentNavigationVC.swift in Sources */,
+				86B2E897246B90A800D569A1 /* BasePresentVC.swift in Sources */,
+				86B2E8A8246BAFE100D569A1 /* MainViewController.swift in Sources */,
 				86C9FBA9246A94F100D2E5E2 /* BaseNavigationViewController.swift in Sources */,
+				86B2E8AB246BB06700D569A1 /* TabBarViewController.swift in Sources */,
+				86B2E8A5246B99C800D569A1 /* BaseSize.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -298,8 +417,10 @@
 		};
 		869E20AB246A73B9007588B5 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 75D5DE4389B8F8AAD3C0EE7E /* Pods-SwiftBasicStructure.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = SwiftBasicStructure/Info.plist;
@@ -309,6 +430,8 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = pengYueLi.SwiftBasicStructure;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftBasicStructure/System/SwiftBasicStructure-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -316,8 +439,10 @@
 		};
 		869E20AC246A73B9007588B5 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = FE1D207C279B3E5473D47ADF /* Pods-SwiftBasicStructure.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = "";
 				INFOPLIST_FILE = SwiftBasicStructure/Info.plist;
@@ -327,6 +452,7 @@
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = pengYueLi.SwiftBasicStructure;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SwiftBasicStructure/System/SwiftBasicStructure-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
