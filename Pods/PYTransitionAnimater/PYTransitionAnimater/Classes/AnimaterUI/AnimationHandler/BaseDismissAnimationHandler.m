@@ -44,7 +44,7 @@
     } andCompletionBlock:nil];
 }
 
-- (void) dismissZoomAnimationFunc {9
+- (void) dismissZoomAnimationFunc {
     [self dismissAnimation:^(BaseDismissAnimationHandler *weakSelf) {
         weakSelf.animationView.transform = CGAffineTransformMakeScale(0, 0);
     } andCompletionBlock:nil];
