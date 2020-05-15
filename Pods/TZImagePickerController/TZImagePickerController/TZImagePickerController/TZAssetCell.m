@@ -16,10 +16,9 @@
 @interface TZAssetCell ()
 @property (weak, nonatomic) UIImageView *imageView;       // The photo / 照片
 @property (weak, nonatomic) UIImageView *selectImageView;
-@property (weak, nonatomic) UILabel *timeLength;
-@property (weak, nonatomic) UIImageView *gifImageView;
 @property (weak, nonatomic) UILabel *indexLabel;
 @property (weak, nonatomic) UIView *bottomView;
+@property (weak, nonatomic) UILabel *timeLength;
 @property (strong, nonatomic) UITapGestureRecognizer *tapGesture;
 
 @property (nonatomic, weak) UIImageView *videoImgView;
@@ -57,9 +56,9 @@
     }
     self.imageRequestID = imageRequestID;
     self.selectPhotoButton.selected = model.isSelected;
-    self.selectImageView.image = model.isSelected ? self.photoSelImage : self.photoDefImage;
+    self.selectImageView.image = self.selectPhotoButton.isSelected ? self.photoSelImage : self.photoDefImage;
     self.indexLabel.hidden = !self.selectPhotoButton.isSelected;
-
+    
     self.type = (NSInteger)model.type;
     // 让宽度/高度小于 最小可选照片尺寸 的图片不能选中
     if (![[TZImageManager manager] isPhotoSelectableWithAsset:model.asset]) {
@@ -74,7 +73,6 @@
     } else {
         [self cancelBigImageRequest];
     }
-    [self bringSubviewToFront:self.selectPhotoButton];
     [self setNeedsLayout];
     
     if (self.assetCellDidSetModelBlock) {
@@ -101,7 +99,6 @@
 
 - (void)setType:(TZAssetCellType)type {
     _type = type;
-    self.gifImageView.hidden = YES;
     if (type == TZAssetCellTypePhoto || type == TZAssetCellTypeLivePhoto || (type == TZAssetCellTypePhotoGif && !self.allowPickingGif) || self.allowPickingMultipleVideo) {
         _selectImageView.hidden = NO;
         _selectPhotoButton.hidden = NO;
@@ -114,14 +111,15 @@
     if (type == TZAssetCellTypeVideo) {
         self.bottomView.hidden = NO;
         self.timeLength.text = _model.timeLength;
-        self.videoImgView.hidden = YES;
-        _timeLength.textAlignment = NSTextAlignmentCenter;
+        self.videoImgView.hidden = NO;
+        _timeLength.tz_left = self.videoImgView.tz_right;
+        _timeLength.textAlignment = NSTextAlignmentRight;
     } else if (type == TZAssetCellTypePhotoGif && self.allowPickingGif) {
-        _selectImageView.hidden = NO;
-        _selectPhotoButton.hidden = NO;
         self.bottomView.hidden = NO;
-        self.gifImageView.hidden = NO;
+        self.timeLength.text = @"GIF";
         self.videoImgView.hidden = YES;
+        _timeLength.tz_left = 5;
+        _timeLength.textAlignment = NSTextAlignmentLeft;
     }
 }
 
@@ -200,6 +198,21 @@
 
 - (void)reload:(NSNotification *)noti {
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)noti.object;
+    
+    UIViewController *parentViewController = nil;
+    UIResponder *responder = self.nextResponder;
+    do {
+        if ([responder isKindOfClass:[UIViewController class]]) {
+            parentViewController = (UIViewController *)responder;
+            break;
+        }
+        responder = responder.nextResponder;
+    } while (responder);
+    
+    if (parentViewController.navigationController != tzImagePickerVc) {
+        return;
+    }
+    
     if (self.model.isSelected && tzImagePickerVc.showSelectedIndex) {
         self.index = [tzImagePickerVc.selectedAssetIds indexOfObject:self.model.asset.localIdentifier] + 1;
     }
@@ -241,7 +254,7 @@
 - (UIImageView *)selectImageView {
     if (_selectImageView == nil) {
         UIImageView *selectImageView = [[UIImageView alloc] init];
-        selectImageView.contentMode = UIViewContentModeScaleAspectFill;
+        selectImageView.contentMode = UIViewContentModeCenter;
         selectImageView.clipsToBounds = YES;
         [self.contentView addSubview:selectImageView];
         _selectImageView = selectImageView;
@@ -249,11 +262,11 @@
     return _selectImageView;
 }
 
-
 - (UIView *)bottomView {
     if (_bottomView == nil) {
         UIView *bottomView = [[UIView alloc] init];
-        bottomView.backgroundColor = UIColor.clearColor;
+        static NSInteger rgb = 0;
+        bottomView.backgroundColor = [UIColor colorWithRed:rgb green:rgb blue:rgb alpha:0.8];
         [self.contentView addSubview:bottomView];
         _bottomView = bottomView;
     }
@@ -279,24 +292,12 @@
     return _videoImgView;
 }
 
-- (UIImageView *)gifImageView {
-    if (_gifImageView == nil) {
-        UIImageView *videoImgView = [[UIImageView alloc] init];
-        [videoImgView setImage:[UIImage tz_imageNamedFromMyBundle:@"pic_gif"]];
-        [self.bottomView addSubview:videoImgView];
-        _gifImageView = videoImgView;
-    }
-    return _gifImageView;
-}
 - (UILabel *)timeLength {
     if (_timeLength == nil) {
         UILabel *timeLength = [[UILabel alloc] init];
-        timeLength.font = [UIFont boldSystemFontOfSize:10];
+        timeLength.font = [UIFont boldSystemFontOfSize:11];
         timeLength.textColor = [UIColor whiteColor];
-        timeLength.textAlignment = NSTextAlignmentCenter;
-        timeLength.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.5];
-        timeLength.clipsToBounds = YES;
-        timeLength.layer.cornerRadius = 7;
+        timeLength.textAlignment = NSTextAlignmentRight;
         [self.bottomView addSubview:timeLength];
         _timeLength = timeLength;
     }
@@ -307,6 +308,7 @@
     if (_indexLabel == nil) {
         UILabel *indexLabel = [[UILabel alloc] init];
         indexLabel.font = [UIFont systemFontOfSize:14];
+        indexLabel.adjustsFontSizeToFitWidth = YES;
         indexLabel.textColor = [UIColor whiteColor];
         indexLabel.textAlignment = NSTextAlignmentCenter;
         [self.contentView addSubview:indexLabel];
@@ -332,18 +334,23 @@
     } else {
         _selectPhotoButton.frame = self.bounds;
     }
-    _selectImageView.frame = CGRectMake(self.tz_width - 20 - 5, 5, 20, 20);
+    _selectImageView.frame = CGRectMake(self.tz_width - 27, 3, 24, 24);
+    if (_selectImageView.image.size.width <= 27) {
+        _selectImageView.contentMode = UIViewContentModeCenter;
+    } else {
+        _selectImageView.contentMode = UIViewContentModeScaleAspectFit;
+    }
     _indexLabel.frame = _selectImageView.frame;
     _imageView.frame = CGRectMake(0, 0, self.tz_width, self.tz_height);
-
+    
     static CGFloat progressWH = 20;
     CGFloat progressXY = (self.tz_width - progressWH) / 2;
     _progressView.frame = CGRectMake(progressXY, progressXY, progressWH, progressWH);
 
-    _bottomView.frame = CGRectMake(0, self.tz_height - 22, self.tz_width, 22);
+    _bottomView.frame = CGRectMake(0, self.tz_height - 17, self.tz_width, 17);
     _videoImgView.frame = CGRectMake(8, 0, 17, 17);
-    _timeLength.frame = CGRectMake(self.tz_width - 8 - 37, 0, 37, 14);
-    _gifImageView.frame = CGRectMake(self.tz_width - 25, 0, 25, 15);
+    _timeLength.frame = CGRectMake(self.videoImgView.tz_right, 0, self.tz_width - self.videoImgView.tz_right - 5, 17);
+    
     self.type = (NSInteger)self.model.type;
     self.showSelectBtn = self.showSelectBtn;
     
@@ -373,6 +380,7 @@
 
 - (instancetype)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier {
     self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
+    self.backgroundColor = [UIColor whiteColor];
     self.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
     return self;
 }
@@ -443,6 +451,7 @@
 - (UIButton *)selectedCountButton {
     if (_selectedCountButton == nil) {
         UIButton *selectedCountButton = [[UIButton alloc] init];
+        selectedCountButton.titleLabel.adjustsFontSizeToFitWidth = YES;
         selectedCountButton.layer.cornerRadius = 12;
         selectedCountButton.clipsToBounds = YES;
         selectedCountButton.backgroundColor = [UIColor redColor];

@@ -4,7 +4,7 @@
 //
 //  Created by 谭真 on 15/12/24.
 //  Copyright © 2015年 谭真. All rights reserved.
-//  version 3.2.0 - 2019.03.02
+//  version 3.3.1 - 2020.02.13
 //  更多信息，请前往项目的github地址：https://github.com/banchichen/TZImagePickerController
 
 /*
@@ -40,26 +40,6 @@
 /// This init method for crop photo / 用这个初始化方法以裁剪图片
 - (instancetype)initCropTypeWithAsset:(PHAsset *)asset photo:(UIImage *)photo completion:(void (^)(UIImage *cropImage,PHAsset *asset))completion;
 
-// MARK: - TS 定制初始化方法
-/// TS_需要裁TS裁剪的初始化方法
-/// 可以初始化之后进行修改，比如标题，裁剪区域样式
-- (instancetype)initWithMaxImagesCountTSType:(NSInteger)maxImagesCount columnNumber:(NSInteger)columnNumber delegate:(id<TZImagePickerControllerDelegate>)delegate pushPhotoPickerVc:(BOOL)pushPhotoPickerVc square:(BOOL)square shouldPick:(BOOL)shouldPick topTitle:(NSString *)topTitle;
-/// TS_外部可以改变主题色的TS裁剪初始化方法
-/// 除主题色都可以初始化之后进行修改，比如标题，裁剪区域样式
-- (instancetype)initWithMaxImagesCountTSType:(NSInteger)maxImagesCount columnNumber:(NSInteger)columnNumber delegate:(id<TZImagePickerControllerDelegate>)delegate pushPhotoPickerVc:(BOOL)pushPhotoPickerVc square:(BOOL)square shouldPick:(BOOL)shouldPick topTitle:(NSString *)topTitle mainColor:(UIColor *)mainColor;
-/// TS_外部可以改变主题色，快捷初始化方法（默认进入照片列表）
-- (instancetype)initWithMaxImagesCount:(NSInteger)maxImagesCount delegate:(id<TZImagePickerControllerDelegate>)delegate mainColor:(UIColor *)mainColor;
-/// TS_外部可以改变主题色，设置列数初始化方法（默认进入照片列表）
-- (instancetype)initWithMaxImagesCount:(NSInteger)maxImagesCount columnNumber:(NSInteger)columnNumber delegate:(id<TZImagePickerControllerDelegate>)delegate mainColor:(UIColor *)mainColor;
-/// TS_外部可以改变主题色，设置列数，是否直接进入照片列表初始化方法
-- (instancetype)initWithMaxImagesCount:(NSInteger)maxImagesCount columnNumber:(NSInteger)columnNumber delegate:(id<TZImagePickerControllerDelegate>)delegate pushPhotoPickerVc:(BOOL)pushPhotoPickerVc mainColor:(UIColor *)mainColor;
-// MARK: - end
-
-/// This init method just for previewing photos / 用这个初始化方法以预览图片
-- (instancetype)initWithSelectedAssets:(NSMutableArray *)selectedAssets selectedPhotos:(NSMutableArray *)selectedPhotos index:(NSInteger)index mainColor:(UIColor *)mainColor;
-/// This init method for crop photo / 用这个初始化方法以裁剪图片
-- (instancetype)initCropTypeWithAsset:(id)asset photo:(UIImage *)photo completion:(void (^)(UIImage *cropImage,id asset))completion mainColor:(UIColor *)mainColor;
-
 #pragma mark -
 /// Default is 9 / 默认最大可选9张图片
 @property (nonatomic, assign) NSInteger maxImagesCount;
@@ -76,7 +56,8 @@
 /// 对照片排序，按修改时间升序，默认是YES。如果设置为NO,最新的照片会显示在最前面，内部的拍照按钮会排在第一个
 @property (nonatomic, assign) BOOL sortAscendingByModificationDate;
 
-/// The pixel width of output image, Default is 828px / 导出图片的宽度，默认828像素宽
+/// The pixel width of output image, Default is 828px，you need to set photoPreviewMaxWidth at the same time
+/// 导出图片的宽度，默认828像素宽，你需要同时设置photoPreviewMaxWidth的值
 @property (nonatomic, assign) CGFloat photoWidth;
 
 /// Default is 600px / 默认600像素宽
@@ -179,6 +160,7 @@
 /// 单选模式,maxImagesCount为1时才生效
 @property (nonatomic, assign) BOOL showSelectBtn;        ///< 在单选模式下，照片列表页中，显示选择按钮,默认为NO
 @property (nonatomic, assign) BOOL allowCrop;            ///< 允许裁剪,默认为YES，showSelectBtn为NO才生效
+@property (nonatomic, assign) BOOL scaleAspectFillCrop;  ///< 是否图片等比缩放填充cropRect区域
 @property (nonatomic, assign) CGRect cropRect;           ///< 裁剪框的尺寸
 @property (nonatomic, assign) CGRect cropRectPortrait;   ///< 裁剪框的尺寸(竖屏)
 @property (nonatomic, assign) CGRect cropRectLandscape;  ///< 裁剪框的尺寸(横屏)
@@ -215,10 +197,6 @@
 @property (assign, nonatomic) BOOL needShowStatusBar;
 
 #pragma mark -
-/// TS+
-@property (nonatomic, copy) NSString *photoPreviewSelImageName;
-@property (nonatomic, copy) NSString *photoPreviewDefImageName;
-/// end
 @property (nonatomic, copy) NSString *takePictureImageName __attribute__((deprecated("Use -takePictureImage.")));
 @property (nonatomic, copy) NSString *photoSelImageName __attribute__((deprecated("Use -photoSelImage.")));
 @property (nonatomic, copy) NSString *photoDefImageName __attribute__((deprecated("Use -photoDefImage.")));
@@ -238,9 +216,6 @@
 /// Appearance / 外观颜色 + 按钮文字
 @property (nonatomic, strong) UIColor *oKButtonTitleColorNormal;
 @property (nonatomic, strong) UIColor *oKButtonTitleColorDisabled;
-// 确定按钮的背景颜色
-@property (nonatomic, strong) UIColor *oKButtonBackGroundColorEnabled;
-@property (nonatomic, strong) UIColor *oKButtonBackGroundColorDisabled;
 @property (nonatomic, strong) UIColor *naviBgColor;
 @property (nonatomic, strong) UIColor *naviTitleColor;
 @property (nonatomic, strong) UIFont *naviTitleFont;
@@ -253,48 +228,6 @@
 @property (nonatomic, copy) NSString *fullImageBtnTitleStr;
 @property (nonatomic, copy) NSString *settingBtnTitleStr;
 @property (nonatomic, copy) NSString *processHintStr;
-// MARK: - TS 定制属性
-///是正方形还是长方形
-@property (assign, nonatomic) BOOL isSquare;
-/// 裁剪size,圆形裁剪则短边裁剪半径
-@property (assign, nonatomic) CGSize clipSize;
-///是否需要裁剪
-@property (assign, nonatomic) BOOL shouldPick;
-///顶部title标题
-@property (nonatomic, copy) NSString *topTitle;
-/// 整个项目主题色
-@property (nonatomic, copy) UIColor *mainColor;
-/// 相册图片选中按钮图片
-/// 建议直接使用photoSelImage进行设置，为兼容旧版本暂不移除该属性
-@property (nonatomic, copy) UIImage *selectImage;
-/// 相册图片预览页面选中按钮 选中图片
-@property (nonatomic, copy) UIImage *previewSelectBtnSelImage;
-/// 相册图片预览页面选中按钮 未选中图片
-@property (nonatomic, copy) UIImage *previewSelectBtnDefImage;
-/// 整个项目的返回按钮图片
-@property(nonatomic,strong)UIImage *backImage;
-/// 裁剪页面返回按钮图片
-@property(nonatomic,strong)UIImage *videoEditVCbackImage;
-/// 相册图片拍摄视频图片
-@property (nonatomic, copy) UIImage *takeVideo;
-/// 视频编辑页面左图片
-@property (nonatomic, copy) UIImage *editFaceLeft;
-/// 视频编辑页面右图片
-@property (nonatomic, copy) UIImage *editFaceRight;
-/// 整个项目的视频封面选择框
-@property(nonatomic,strong)UIImage *picCoverImage;
-/// (视频)是否需要选择封面,默认为YES
-/// 不选择则默认第一帧
-@property(nonatomic, assign) BOOL shouldSetCoverImage;
-/// 最大裁剪视频时长(秒) 默认10秒
-@property (nonatomic) NSUInteger maxEditVideoTime;
-/// 最小可选视频时长(秒) 默认3秒
-@property (nonatomic) NSUInteger minEditVideoTime;
-/// 直接进入视频编辑 默认NO 弹窗提示是否快速上传或者编辑后上传
-@property (nonatomic) BOOL directEditVideo;
-
-
-// MARK: end
 
 /// Icon theme color, default is green color like wechat, the value is r:31 g:185 b:34. Currently only support image selection icon when showSelectedIndex is YES. If you need it, please set it as soon as possible
 /// icon主题色，默认是微信的绿色，值是r:31 g:185 b:34。目前仅支持showSelectedIndex为YES时的图片选中icon。如需要，请尽早设置它。
@@ -330,8 +263,6 @@
 - (void)imagePickerController:(TZImagePickerController *)picker didFinishPickingPhotos:(NSArray<UIImage *> *)photos sourceAssets:(NSArray *)assets isSelectOriginalPhoto:(BOOL)isSelectOriginalPhoto;
 - (void)imagePickerController:(TZImagePickerController *)picker didFinishPickingPhotos:(NSArray<UIImage *> *)photos sourceAssets:(NSArray *)assets isSelectOriginalPhoto:(BOOL)isSelectOriginalPhoto infos:(NSArray<NSDictionary *> *)infos;
 - (void)tz_imagePickerControllerDidCancel:(TZImagePickerController *)picker;
-// TS定制
-- (void)imagePickerController:(TZImagePickerController *)picker didFinishEditVideoCoverImage:(UIImage *)coverImage videoURL:(id)videoURL;
 
 // If user picking a video and allowPickingMultipleVideo is NO, this callback will be called.
 // If allowPickingMultipleVideo is YES, will call imagePickerController:didFinishPickingPhotos:sourceAssets:isSelectOriginalPhoto:
@@ -352,19 +283,12 @@
 // Decide asset show or not't
 // 决定照片显示与否
 - (BOOL)isAssetCanSelect:(PHAsset *)asset;
-
-// 点击了拍照相册内的拍照按钮
-- (void)imagePickerControllerDidClickTakePhotoBtn:(TZImagePickerController *)picker;
 @end
 
 
 @interface TZAlbumPickerController : UIViewController
 @property (nonatomic, assign) NSInteger columnNumber;
 @property (assign, nonatomic) BOOL isFirstAppear;
-
-/// 整个项目主题色
-@property (nonatomic, strong) UIColor *mainColor;
-
 - (void)configTableView;
 @end
 
@@ -380,6 +304,7 @@
 // 获得Info.plist数据字典
 + (NSDictionary *)tz_getInfoDictionary;
 + (BOOL)tz_isRightToLeftLayout;
++ (void)configBarButtonItem:(UIBarButtonItem *)item tzImagePickerVc:(TZImagePickerController *)tzImagePickerVc;
 @end
 
 

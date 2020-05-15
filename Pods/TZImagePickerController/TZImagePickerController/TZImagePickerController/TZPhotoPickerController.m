@@ -16,12 +16,10 @@
 #import "TZVideoPlayerController.h"
 #import "TZGifPhotoPreviewController.h"
 #import "TZLocationManager.h"
-#import "LZImageCropping.h"
-#import "ZLEditVideoController.h"
 #import <MobileCoreServices/MobileCoreServices.h>
 #import "TZImageRequestOperation.h"
 
-@interface TZPhotoPickerController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIAlertViewDelegate,LZImageCroppingDelegate> {
+@interface TZPhotoPickerController ()<UICollectionViewDataSource,UICollectionViewDelegate,UIImagePickerControllerDelegate,UINavigationControllerDelegate> {
     NSMutableArray *_models;
     
     UIView *_bottomToolBar;
@@ -83,37 +81,22 @@ static CGFloat itemMargin = 5;
     _isSelectOriginalPhoto = tzImagePickerVc.isSelectOriginalPhoto;
     _shouldScrollToBottom = YES;
     self.view.backgroundColor = [UIColor whiteColor];
-    // 如果仅仅选择视频 title就固定显示"选择视频"
-    // 其他情况显示当前相册名称
-    if (tzImagePickerVc.allowPickingImage == NO && tzImagePickerVc.allowPickingGif == NO  && tzImagePickerVc.allowPickingVideo == YES) {
-        self.navigationItem.title = @"选择视频";
-    } else {
-        self.navigationItem.title = _model.name;
+    self.navigationItem.title = _model.name;
+    UIBarButtonItem *cancelItem = [[UIBarButtonItem alloc] initWithTitle:tzImagePickerVc.cancelBtnTitleStr style:UIBarButtonItemStylePlain target:tzImagePickerVc action:@selector(cancelButtonClick)];
+    [TZCommonTools configBarButtonItem:cancelItem tzImagePickerVc:tzImagePickerVc];
+    self.navigationItem.rightBarButtonItem = cancelItem;
+    if (tzImagePickerVc.navLeftBarButtonSettingBlock) {
+        UIButton *leftButton = [UIButton buttonWithType:UIButtonTypeCustom];
+        leftButton.frame = CGRectMake(0, 0, 44, 44);
+        [leftButton addTarget:self action:@selector(navLeftBarButtonClick) forControlEvents:UIControlEventTouchUpInside];
+        tzImagePickerVc.navLeftBarButtonSettingBlock(leftButton);
+        self.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:leftButton];
+    } else if (tzImagePickerVc.childViewControllers.count) {
+        UIBarButtonItem *backItem = [[UIBarButtonItem alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Back"] style:UIBarButtonItemStylePlain target:nil action:nil];
+        [TZCommonTools configBarButtonItem:backItem tzImagePickerVc:tzImagePickerVc];
+        [tzImagePickerVc.childViewControllers firstObject].navigationItem.backBarButtonItem = backItem;
     }
-    UIButton *rightButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    rightButton.frame = CGRectMake(0, 0, 44, 44);
-    rightButton.titleLabel.font = [UIFont systemFontOfSize:16];
-    [rightButton setTitle:tzImagePickerVc.cancelBtnTitleStr forState:UIControlStateNormal];
-    if (_mainColor) {
-        [rightButton setTitleColor:_mainColor forState:UIControlStateNormal];
-    } else {
-        [rightButton setTitleColor:[UIColor colorWithRed:89/255.0 green:182/255.0 blue:215/255.0 alpha:1] forState:UIControlStateNormal];
-    }
-    [rightButton addTarget:tzImagePickerVc action:@selector(cancelButtonClick) forControlEvents:UIControlEventTouchUpInside];
-    self.navigationItem.rightBarButtonItem = [[UIBarButtonItem alloc] initWithCustomView:rightButton];
-    if (tzImagePickerVc.backImage) {
-        [[UINavigationBar appearance] setBackIndicatorImage:tzImagePickerVc.backImage];
-        [[UINavigationBar appearance] setBackIndicatorTransitionMaskImage:tzImagePickerVc.backImage];
-    }
- 
-    UIBarButtonItem *backBtnItem = [[UIBarButtonItem alloc] init];
-    backBtnItem.title = @"";
-    self.navigationItem.backBarButtonItem = backBtnItem;
-    _showTakePhotoBtn = (_model.isCameraRoll && tzImagePickerVc.allowTakePicture);
-    /// 通过调整返回按钮X轴偏移量,把title移到屏幕外,实现隐藏返回按钮标题的效果
-    [[UIBarButtonItem appearance] setBackButtonTitlePositionAdjustment:UIOffsetMake(-100, 0)
-                                                         forBarMetrics:UIBarMetricsDefault];
-
+    _showTakePhotoBtn = _model.isCameraRoll && ((tzImagePickerVc.allowTakePicture && tzImagePickerVc.allowPickingImage) || (tzImagePickerVc.allowTakeVideo && tzImagePickerVc.allowPickingVideo));
     // [self resetCachedAssets];
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(didChangeStatusBarOrientationNotification:) name:UIApplicationDidChangeStatusBarOrientationNotification object:nil];
     
@@ -244,7 +227,6 @@ static CGFloat itemMargin = 5;
     [_previewButton setTitleColor:[UIColor lightGrayColor] forState:UIControlStateDisabled];
     _previewButton.enabled = tzImagePickerVc.selectedModels.count;
     
-    /*
     if (tzImagePickerVc.allowPickingOriginalPhoto) {
         _originalPhotoButton = [UIButton buttonWithType:UIButtonTypeCustom];
         _originalPhotoButton.imageEdgeInsets = UIEdgeInsetsMake(0, [TZCommonTools tz_isRightToLeftLayout] ? 10 : -10, 0, 0);
@@ -267,54 +249,41 @@ static CGFloat itemMargin = 5;
         _originalPhotoLabel.textColor = [UIColor blackColor];
         if (_isSelectOriginalPhoto) [self getSelectedPhotoBytes];
     }
-     */
     
     _doneButton = [UIButton buttonWithType:UIButtonTypeCustom];
-    _doneButton.titleLabel.font = [UIFont systemFontOfSize:14];
+    _doneButton.titleLabel.font = [UIFont systemFontOfSize:16];
     [_doneButton addTarget:self action:@selector(doneButtonClick) forControlEvents:UIControlEventTouchUpInside];
     [_doneButton setTitle:tzImagePickerVc.doneBtnTitleStr forState:UIControlStateNormal];
     [_doneButton setTitle:tzImagePickerVc.doneBtnTitleStr forState:UIControlStateDisabled];
     [_doneButton setTitleColor:tzImagePickerVc.oKButtonTitleColorNormal forState:UIControlStateNormal];
     [_doneButton setTitleColor:tzImagePickerVc.oKButtonTitleColorDisabled forState:UIControlStateDisabled];
     _doneButton.enabled = tzImagePickerVc.selectedModels.count || tzImagePickerVc.alwaysEnableDoneBtn;
-    if ((long)tzImagePickerVc.maxImagesCount > 1) {
-        [_doneButton setTitle:[NSString stringWithFormat:@"完成(%ld/%ld)",tzImagePickerVc.selectedModels.count,(long)tzImagePickerVc.maxImagesCount] forState:UIControlStateNormal];
-        [_doneButton setTitle:[NSString stringWithFormat:@"完成(%ld/%ld)",tzImagePickerVc.selectedModels.count,(long)tzImagePickerVc.maxImagesCount] forState:UIControlStateDisabled];
-        if(tzImagePickerVc.selectedModels.count > 0) {
-            _doneButton.backgroundColor = tzImagePickerVc.oKButtonBackGroundColorEnabled;
-        } else {
-            _doneButton.backgroundColor = tzImagePickerVc.oKButtonBackGroundColorDisabled;
-        }
-    } else {
-        [_doneButton setTitle:@"完成" forState:UIControlStateNormal];
-        _doneButton.backgroundColor = tzImagePickerVc.oKButtonBackGroundColorEnabled;
-    }
-    /*
+    
     _numberImageView = [[UIImageView alloc] initWithImage:tzImagePickerVc.photoNumberIconImage];
-
     _numberImageView.hidden = tzImagePickerVc.selectedModels.count <= 0;
     _numberImageView.clipsToBounds = YES;
     _numberImageView.contentMode = UIViewContentModeScaleAspectFit;
     _numberImageView.backgroundColor = [UIColor clearColor];
-    []
+    
     _numberLabel = [[UILabel alloc] init];
     _numberLabel.font = [UIFont systemFontOfSize:15];
+    _numberLabel.adjustsFontSizeToFitWidth = YES;
     _numberLabel.textColor = [UIColor whiteColor];
     _numberLabel.textAlignment = NSTextAlignmentCenter;
     _numberLabel.text = [NSString stringWithFormat:@"%zd",tzImagePickerVc.selectedModels.count];
     _numberLabel.hidden = tzImagePickerVc.selectedModels.count <= 0;
     _numberLabel.backgroundColor = [UIColor clearColor];
-    */
+    
     _divideLine = [[UIView alloc] init];
-    CGFloat rgb2 = 235 / 255.0;
+    CGFloat rgb2 = 222 / 255.0;
     _divideLine.backgroundColor = [UIColor colorWithRed:rgb2 green:rgb2 blue:rgb2 alpha:1.0];
     
     [_bottomToolBar addSubview:_divideLine];
     [_bottomToolBar addSubview:_previewButton];
     [_bottomToolBar addSubview:_doneButton];
-//    [_bottomToolBar addSubview:_numberImageView];
-//    [_bottomToolBar addSubview:_numberLabel];
-//    [_bottomToolBar addSubview:_originalPhotoButton];
+    [_bottomToolBar addSubview:_numberImageView];
+    [_bottomToolBar addSubview:_numberLabel];
+    [_bottomToolBar addSubview:_originalPhotoButton];
     [self.view addSubview:_bottomToolBar];
     [_originalPhotoButton addSubview:_originalPhotoLabel];
     
@@ -334,10 +303,11 @@ static CGFloat itemMargin = 5;
     CGFloat collectionViewHeight = 0;
     CGFloat naviBarHeight = self.navigationController.navigationBar.tz_height;
     BOOL isStatusBarHidden = [UIApplication sharedApplication].isStatusBarHidden;
+    BOOL isFullScreen = self.view.tz_height == [UIScreen mainScreen].bounds.size.height;
     CGFloat toolBarHeight = [TZCommonTools tz_isIPhoneX] ? 50 + (83 - 49) : 50;
     if (self.navigationController.navigationBar.isTranslucent) {
         top = naviBarHeight;
-        if (!isStatusBarHidden) top += [TZCommonTools tz_statusBarHeight];
+        if (!isStatusBarHidden && isFullScreen) top += [TZCommonTools tz_statusBarHeight];
         collectionViewHeight = tzImagePickerVc.showSelectBtn ? self.view.tz_height - toolBarHeight - top : self.view.tz_height - top;;
     } else {
         collectionViewHeight = tzImagePickerVc.showSelectBtn ? self.view.tz_height - toolBarHeight : self.view.tz_height;
@@ -375,9 +345,7 @@ static CGFloat itemMargin = 5;
         _originalPhotoLabel.frame = CGRectMake(fullImageWidth + 46, 0, 80, 50);
     }
     [_doneButton sizeToFit];
-    _doneButton.frame = CGRectMake(self.view.tz_width - _doneButton.tz_width - 20 - 12, 10, _doneButton.tz_width + 20, 30);
-    _doneButton.layer.cornerRadius = 5;
-    _doneButton.clipsToBounds = YES;
+    _doneButton.frame = CGRectMake(self.view.tz_width - _doneButton.tz_width - 12, 0, _doneButton.tz_width, 50);
     _numberImageView.frame = CGRectMake(_doneButton.tz_left - 24 - 5, 13, 24, 24);
     _numberLabel.frame = _numberImageView.frame;
     _divideLine.frame = CGRectMake(0, 0, self.view.tz_width, 1);
@@ -425,6 +393,7 @@ static CGFloat itemMargin = 5;
     }
     
     [tzImagePickerVc showProgressHUD];
+    _doneButton.enabled = NO;
     NSMutableArray *assets = [NSMutableArray array];
     NSMutableArray *photos;
     NSMutableArray *infoArr;
@@ -463,7 +432,6 @@ static CGFloat itemMargin = 5;
             } progressHandler:^(double progress, NSError * _Nonnull error, BOOL * _Nonnull stop, NSDictionary * _Nonnull info) {
                 // 如果图片正在从iCloud同步中,提醒用户
                 if (progress < 1 && havenotShowAlert && !alertView) {
-                    [tzImagePickerVc hideProgressHUD];
                     alertView = [tzImagePickerVc showAlertWithTitle:[NSBundle tz_localizedStringForKey:@"Synchronizing photos from iCloud"]];
                     havenotShowAlert = NO;
                     return;
@@ -483,7 +451,8 @@ static CGFloat itemMargin = 5;
 - (void)didGetAllPhotos:(NSArray *)photos assets:(NSArray *)assets infoArr:(NSArray *)infoArr {
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
     [tzImagePickerVc hideProgressHUD];
-    
+    _doneButton.enabled = YES;
+
     if (tzImagePickerVc.autoDismiss) {
         [self.navigationController dismissViewControllerAnimated:YES completion:^{
             [self callDelegateMethodWithPhotos:photos assets:assets infoArr:infoArr];
@@ -535,12 +504,14 @@ static CGFloat itemMargin = 5;
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
     if (((tzImagePickerVc.sortAscendingByModificationDate && indexPath.item >= _models.count) || (!tzImagePickerVc.sortAscendingByModificationDate && indexPath.item == 0)) && _showTakePhotoBtn) {
         TZAssetCameraCell *cell = [collectionView dequeueReusableCellWithReuseIdentifier:@"TZAssetCameraCell" forIndexPath:indexPath];
-        if (tzImagePickerVc.takeVideo) {
-            cell.imageView.image = tzImagePickerVc.takeVideo;
+        cell.imageView.image = tzImagePickerVc.takePictureImage;
+        if ([tzImagePickerVc.takePictureImageName isEqualToString:@"takePicture80"]) {
+            cell.imageView.contentMode = UIViewContentModeCenter;
+            CGFloat rgb = 223 / 255.0;
+            cell.imageView.backgroundColor = [UIColor colorWithRed:rgb green:rgb blue:rgb alpha:1.0];
         } else {
-            cell.imageView.image = [UIImage tz_imageNamedFromMyBundle:tzImagePickerVc.takePictureImageName];
+            cell.imageView.backgroundColor = [UIColor colorWithWhite:1.000 alpha:0.500];
         }
-        cell.imageView.backgroundColor = tzImagePickerVc.oKButtonBackGroundColorDisabled;
         return cell;
     }
     // the cell dipaly photo or video / 展示照片或视频的cell
@@ -550,8 +521,6 @@ static CGFloat itemMargin = 5;
     cell.photoSelImage = tzImagePickerVc.photoSelImage;
     cell.assetCellDidSetModelBlock = tzImagePickerVc.assetCellDidSetModelBlock;
     cell.assetCellDidLayoutSubviewsBlock = tzImagePickerVc.assetCellDidLayoutSubviewsBlock;
-    cell.mainColor = tzImagePickerVc.mainColor;
-
     TZAssetModel *model;
     if (tzImagePickerVc.sortAscendingByModificationDate || !_showTakePhotoBtn) {
         model = _models[indexPath.item];
@@ -585,14 +554,13 @@ static CGFloat itemMargin = 5;
         if (isSelected) {
             strongCell.selectPhotoButton.selected = NO;
             model.isSelected = NO;
-            NSMutableArray *selectedModels = [NSMutableArray arrayWithArray:tzImagePickerVc.selectedModels];
+            NSArray *selectedModels = [NSArray arrayWithArray:tzImagePickerVc.selectedModels];
             for (TZAssetModel *model_item in selectedModels) {
                 if ([model.asset.localIdentifier isEqualToString:model_item.asset.localIdentifier]) {
                     [tzImagePickerVc removeSelectedModel:model_item];
                     break;
                 }
             }
-            [self checkSelectedModels];
             [strongSelf refreshBottomToolBarStatus];
             if (tzImagePickerVc.showSelectedIndex || tzImagePickerVc.showPhotoCannotSelectLayer) {
                 [[NSNotificationCenter defaultCenter] postNotificationName:@"TZ_PHOTO_PICKER_RELOAD_NOTIFICATION" object:strongSelf.navigationController];
@@ -627,17 +595,8 @@ static CGFloat itemMargin = 5;
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath {
     // take a photo / 去拍照
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
-    if (((tzImagePickerVc.sortAscendingByModificationDate && indexPath.row >= _models.count) || (!tzImagePickerVc.sortAscendingByModificationDate && indexPath.row == 0)) && _showTakePhotoBtn)  {
-        // 选择短视频的模式，通过代理调起拍照
-        // 否则使用系统的拍照
-        if (tzImagePickerVc.allowPickingImage == NO && tzImagePickerVc.allowPickingGif == NO && tzImagePickerVc.allowPickingVideo == YES && [tzImagePickerVc.pickerDelegate respondsToSelector:@selector(imagePickerControllerDidClickTakePhotoBtn:)]) {
-            [self.navigationController dismissViewControllerAnimated:NO completion:^{
-                [tzImagePickerVc.pickerDelegate imagePickerControllerDidClickTakePhotoBtn:tzImagePickerVc];
-            }];
-        } else {
-            [self takePhoto];
-        }
-        return;
+    if (((tzImagePickerVc.sortAscendingByModificationDate && indexPath.item >= _models.count) || (!tzImagePickerVc.sortAscendingByModificationDate && indexPath.item == 0)) && _showTakePhotoBtn)  {
+        [self takePhoto]; return;
     }
     // preview phote or video / 预览照片或视频
     NSInteger index = indexPath.item;
@@ -650,186 +609,9 @@ static CGFloat itemMargin = 5;
             TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
             [imagePickerVc showAlertWithTitle:[NSBundle tz_localizedStringForKey:@"Can not choose both video and photo"]];
         } else {
-            // 先判断试是否是低于5min的视频, 同时没有开启直接编辑属性
-            // 小于等于5min弹窗提示支持快速上传，以及编辑后上传
-            // 大于5min，直接进入编辑页面
-
-            NSArray *timeArr = [model.timeLength componentsSeparatedByString:@":"];
-            if (timeArr.count == 2 && (([timeArr[1] integerValue] == 0 && [timeArr[0] integerValue] <= 5) || ([timeArr[1] integerValue] > 0 && [timeArr[0] integerValue] <= 4)) && tzImagePickerVc.directEditVideo == false) {
-                UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"" message:@"温馨提示" preferredStyle:UIAlertControllerStyleActionSheet];
-                UIAlertAction *uploadAction = [UIAlertAction actionWithTitle:@"快速上传(支持5分钟以内)" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    NSLog(@"uploadAction");
-                    [tzImagePickerVc showProgressHUD];
-                    // 禁止用户操作
-                    tzImagePickerVc.view.userInteractionEnabled = NO;
-
-                    [[PHImageManager defaultManager] requestAVAssetForVideo:model.asset options:nil resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
-                        if ([asset isKindOfClass:[AVURLAsset class]]) {
-                            AVURLAsset *urlAsset = (AVURLAsset*)asset;
-                            NSNumber *size;
-                            [urlAsset.URL getResourceValue:&size forKey:NSURLFileSizeKey error:nil];
-                            /// 默认25mb以下导出最高画质,25以上导出720p中等画质的视频
-                            // 默认导出720p中等画质的视频
-                            NSString * exportPresetQulity;
-                            if (size.longLongValue / (1024.0 * 1024.4) > 25) {
-                                exportPresetQulity = AVAssetExportPreset960x540;
-                            } else {
-                                exportPresetQulity = AVAssetExportPresetMediumQuality;
-                            }
-                            [[TZImageManager alloc] getVideoOutputPathWithAsset:model.asset presetName:exportPresetQulity version:PHVideoRequestOptionsVersionOriginal success:^(NSString *outputPath) {
-                                NSString *exportFilePath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.%@",@"exportVideo",@"mp4"]];
-                                if ([[NSFileManager defaultManager] fileExistsAtPath:exportFilePath]) {
-                                    // 移除上一个
-                                    NSError *removeErr;
-                                    [[NSFileManager defaultManager] removeItemAtPath:exportFilePath error: &removeErr];
-                                }
-                                // 把文件移动到同一的路径下，修改为同一的名称。方便后续的操作
-                                NSError *moveErr;
-                                [[NSFileManager defaultManager] moveItemAtURL:[NSURL fileURLWithPath:outputPath] toURL:[NSURL fileURLWithPath:exportFilePath] error:&moveErr];
-                                // 获取封面图
-                                PHVideoRequestOptions* options = [[PHVideoRequestOptions alloc] init];
-                                options.version = PHVideoRequestOptionsVersionOriginal;
-                                options.deliveryMode = PHVideoRequestOptionsDeliveryModeAutomatic;
-                                options.networkAccessAllowed = YES;
-                                [[PHImageManager defaultManager] requestAVAssetForVideo:model.asset options:options resultHandler:^(AVAsset * _Nullable asset, AVAudioMix * _Nullable audioMix, NSDictionary * _Nullable info) {
-                                    __weak typeof(self) weakSelf = self;
-                                    AVAssetImageGenerator *generator = [[AVAssetImageGenerator alloc] initWithAsset:asset];
-                                    generator.appliesPreferredTrackTransform = YES;
-                                    generator.requestedTimeToleranceBefore = kCMTimeZero;
-                                    generator.requestedTimeToleranceAfter = kCMTimeZero;
-                                    generator.apertureMode = AVAssetImageGeneratorApertureModeProductionAperture;
-                                    NSError *error = nil;
-                                    UIImage *coverImage;
-                                    
-                                    CGFloat second = 0;
-                                    for (int i = 0; i < 5; i ++) {
-                                        CGImageRef img = [generator copyCGImageAtTime:CMTimeMake(second * asset.duration.timescale, asset.duration.timescale) actualTime:NULL error:&error];
-                                        second = second + 0.2;
-                                        if (img != nil) {
-                                            coverImage = [UIImage imageWithCGImage:img];
-                                            break;
-                                        }
-                                        NSLog(@"error\n\n -%@", error);
-                                    }
-                                    // 允许用户操作
-                                    tzImagePickerVc.view.userInteractionEnabled = YES;
-                                    [tzImagePickerVc hideProgressHUD];
-                                    if (coverImage != nil && exportFilePath != nil) {
-                                        /// 切换到主线程
-                                        dispatch_sync(dispatch_get_main_queue(), ^{
-                                            [tzImagePickerVc dismissViewControllerAnimated:YES completion:^{
-                                                if ([tzImagePickerVc.pickerDelegate respondsToSelector:@selector(imagePickerController:didFinishEditVideoCoverImage:videoURL:)]) {
-                                                    [tzImagePickerVc.pickerDelegate imagePickerController:tzImagePickerVc didFinishEditVideoCoverImage:coverImage videoURL:[NSURL fileURLWithPath:exportFilePath]];
-                                                }
-                                            }];
-                                        });
-                                    } else {
-                                        // 允许用户操作
-                                        tzImagePickerVc.view.userInteractionEnabled = YES;
-                                        [tzImagePickerVc showAlertWithTitle:@"封面获取出问题啦，请手动编辑"];
-                                    }
-                                }];
-                            } failure:^(NSString *errorMessage, NSError *error) {
-                                // 允许用户操作
-                                tzImagePickerVc.view.userInteractionEnabled = YES;
-                                [tzImagePickerVc showAlertWithTitle:@"自动导出出问题啦，请手动编辑"];
-                            }];
-                        } else {
-                            // 允许用户操作
-                            tzImagePickerVc.view.userInteractionEnabled = YES;
-                            [tzImagePickerVc showAlertWithTitle:@"封面获取出问题啦，请手动编辑"];
-                        }
-                    }];
-                }];
-                UIAlertAction *editAction = [UIAlertAction actionWithTitle:@"编辑后上传" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                    NSLog(@"editAction");
-                    TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
-                    ZLEditVideoController *editVC = [[ZLEditVideoController alloc]init];
-                    if (imagePickerVc.videoEditVCbackImage) {
-                        editVC.backImage = imagePickerVc.videoEditVCbackImage;
-                    }
-                    if (imagePickerVc.mainColor) {
-                        editVC.mainColor = imagePickerVc.mainColor;
-                    }
-                    if (imagePickerVc.maxEditVideoTime > 0) {
-                        editVC.maxEditVideoTime = imagePickerVc.maxEditVideoTime;
-                    }
-                    if (imagePickerVc.minEditVideoTime > 0) {
-                        editVC.minEditVideoTime = imagePickerVc.minEditVideoTime;
-                    }
-                    editVC.asset = model.asset;
-                    __weak typeof(self) weakSelf = self;
-                    editVC.coverImageBlock = ^(UIImage *coverImage, NSURL *videoPath) {
-                        [imagePickerVc dismissViewControllerAnimated:YES completion:^{
-                            if (coverImage != nil && videoPath != nil) {
-                                if ([imagePickerVc.pickerDelegate respondsToSelector:@selector(imagePickerController:didFinishEditVideoCoverImage:videoURL:)]) {
-                                    [imagePickerVc.pickerDelegate imagePickerController:imagePickerVc didFinishEditVideoCoverImage:coverImage videoURL:videoPath];
-                                }
-                                /// 导航内视图全部pop以释放内存
-                                for (int i = 0; i < weakSelf.navigationController.viewControllers.count; i ++) {
-                                    [weakSelf.navigationController popViewControllerAnimated:YES];
-                                }
-                            }
-                        }];
-                    };
-                    [self.navigationController pushViewController:editVC animated:YES];
-                }];
-                UIAlertAction *cancelAction = [UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
-                    NSLog(@"cancel");
-                }];
-                [alertController addAction:uploadAction];
-                [alertController addAction:editAction];
-                [alertController addAction:cancelAction];
-                [self presentViewController:alertController animated:YES completion:nil];
-            } else {
-                TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
-                ZLEditVideoController *editVC = [[ZLEditVideoController alloc]init];
-                if (imagePickerVc.videoEditVCbackImage) {
-                    editVC.backImage = imagePickerVc.videoEditVCbackImage;
-                }
-                if (imagePickerVc.mainColor) {
-                    editVC.mainColor = imagePickerVc.mainColor;
-                }
-                if (imagePickerVc.maxEditVideoTime > 0) {
-                    editVC.maxEditVideoTime = imagePickerVc.maxEditVideoTime;
-                }
-                if (imagePickerVc.minEditVideoTime > 0) {
-                    editVC.minEditVideoTime = imagePickerVc.minEditVideoTime;
-                }
-                editVC.asset = model.asset;
-                __weak typeof(self) weakSelf = self;
-                editVC.coverImageBlock = ^(UIImage *coverImage, NSURL *videoPath) {
-                    [imagePickerVc dismissViewControllerAnimated:YES completion:^{
-                        if (coverImage != nil && videoPath != nil) {
-                            if ([imagePickerVc.pickerDelegate respondsToSelector:@selector(imagePickerController:didFinishEditVideoCoverImage:videoURL:)]) {
-                                [imagePickerVc.pickerDelegate imagePickerController:imagePickerVc didFinishEditVideoCoverImage:coverImage videoURL:videoPath];
-                            }
-                            /// 导航内视图全部pop以释放内存
-                            for (int i = 0; i < weakSelf.navigationController.viewControllers.count; i ++) {
-                                [weakSelf.navigationController popViewControllerAnimated:YES];
-                            }
-                        }
-                    }];
-                };
-                [self.navigationController pushViewController:editVC animated:YES];
-            }
-            return;
-            // TODO: 后续如果需要修改代码和旧代码共存,增进一个协议函数返回Bool值决定是否调整即可
-            [[TZImageManager manager] getPhotoWithAsset:model.asset completion:^(UIImage *photo, NSDictionary *info, BOOL isDegraded) {
-                if (!isDegraded && photo) {
-                    TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
-                    if (self.navigationController) {
-                        [self.navigationController dismissViewControllerAnimated:NO completion:^{
-                            if ([imagePickerVc.pickerDelegate respondsToSelector:@selector(imagePickerController:didFinishPickingVideo:sourceAssets:)]) {
-                                [imagePickerVc.pickerDelegate imagePickerController:imagePickerVc didFinishPickingVideo:photo sourceAssets:model.asset];
-                            }
-                            if (imagePickerVc.didFinishPickingVideoHandle) {
-                                imagePickerVc.didFinishPickingVideoHandle(photo,model.asset);
-                            }
-                        }];
-                    }
-                }
-            }];
+            TZVideoPlayerController *videoPlayerVc = [[TZVideoPlayerController alloc] init];
+            videoPlayerVc.model = model;
+            [self.navigationController pushViewController:videoPlayerVc animated:YES];
         }
     } else if (model.type == TZAssetModelMediaTypePhotoGif && tzImagePickerVc.allowPickingGif && !tzImagePickerVc.allowPickingMultipleVideo) {
         if (tzImagePickerVc.selectedModels.count > 0) {
@@ -838,52 +620,13 @@ static CGFloat itemMargin = 5;
         } else {
             TZGifPhotoPreviewController *gifPreviewVc = [[TZGifPhotoPreviewController alloc] init];
             gifPreviewVc.model = model;
-            UIBarButtonItem *backBtnItem = [[UIBarButtonItem alloc] init];
-            backBtnItem.title = @" ";
-            self.navigationItem.backBarButtonItem = backBtnItem;
             [self.navigationController pushViewController:gifPreviewVc animated:YES];
         }
     } else {
-        TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
-        if (imagePickerVc.shouldPick) {
-            TZAssetModel *asset = _models[index];
-            TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
-            [[TZImageManager manager] getOriginalPhotoWithAsset:asset.asset completion:^(UIImage *photo, NSDictionary *info) {
-                LZImageCropping *imageBrowser = [[LZImageCropping alloc]init];
-                TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
-                //设置代理
-                imageBrowser.delegate = self;
-                if (tzImagePickerVc.isSquare) {
-                    if (tzImagePickerVc.clipSize.height > 0 && tzImagePickerVc.clipSize.width > 0) {
-                        CGFloat clipR = MIN(tzImagePickerVc.clipSize.height, tzImagePickerVc.clipSize.width);
-                        imageBrowser.cropSize  = CGSizeMake(clipR, clipR);
-                    } else {
-                        imageBrowser.cropSize = CGSizeMake(UIScreen.mainScreen.bounds.size.width - 80, UIScreen.mainScreen.bounds.size.width - 80);
-                    }
-                } else {
-                    if (tzImagePickerVc.clipSize.height > 0 && tzImagePickerVc.clipSize.width > 0) {
-                        imageBrowser.cropSize  = tzImagePickerVc.clipSize;
-                    } else {
-                        imageBrowser.cropSize = CGSizeMake(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.width / 2.0);
-                    }
-                }
-                [imageBrowser setImage:photo];
-                imageBrowser.titleLabel.text = tzImagePickerVc.topTitle;
-                imageBrowser.backImage = imagePickerVc.backImage;
-                //设置自定义裁剪区域大小
-                //是否需要圆形
-                imageBrowser.isRound = NO;
-                if (_mainColor) {
-                    imageBrowser.mainColor = _mainColor;
-                }
-                [self.navigationController pushViewController:imageBrowser animated:YES];
-            }];
-        } else {
-            TZPhotoPreviewController *photoPreviewVc = [[TZPhotoPreviewController alloc] init];
-            photoPreviewVc.currentIndex = index;
-            photoPreviewVc.models = _models;
-            [self pushPhotoPrevireViewController:photoPreviewVc];
-        }
+        TZPhotoPreviewController *photoPreviewVc = [[TZPhotoPreviewController alloc] init];
+        photoPreviewVc.currentIndex = index;
+        photoPreviewVc.models = _models;
+        [self pushPhotoPrevireViewController:photoPreviewVc];
     }
 }
 
@@ -891,11 +634,6 @@ static CGFloat itemMargin = 5;
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView {
     // [self updateCachedAssets];
-}
-
-#pragma mark - LZImageCroppingDelegate
-- (void)lzImageCropping:(LZImageCropping *)cropping didCropImage:(UIImage *)image {
-    [self didGetAllPhotos:@[image] assets:nil infoArr:nil];
 }
 
 #pragma mark - Private Method
@@ -909,10 +647,18 @@ static CGFloat itemMargin = 5;
         // 无权限 做一个友好的提示
         NSString *appName = [infoDict valueForKey:@"CFBundleDisplayName"];
         if (!appName) appName = [infoDict valueForKey:@"CFBundleName"];
-        
+        if (!appName) appName = [infoDict valueForKey:@"CFBundleExecutable"];
+
+        NSString *title = [NSBundle tz_localizedStringForKey:@"Can not use camera"];
         NSString *message = [NSString stringWithFormat:[NSBundle tz_localizedStringForKey:@"Please allow %@ to access your camera in \"Settings -> Privacy -> Camera\""],appName];
-        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:[NSBundle tz_localizedStringForKey:@"Can not use camera"] message:message delegate:self cancelButtonTitle:[NSBundle tz_localizedStringForKey:@"Cancel"] otherButtonTitles:[NSBundle tz_localizedStringForKey:@"Setting"], nil];
-        [alert show];
+        UIAlertController *alertController = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
+        UIAlertAction *cancelAct = [UIAlertAction actionWithTitle:[NSBundle tz_localizedStringForKey:@"Cancel"] style:UIAlertActionStyleCancel handler:nil];
+        [alertController addAction:cancelAct];
+        UIAlertAction *settingAct = [UIAlertAction actionWithTitle:[NSBundle tz_localizedStringForKey:@"Setting"] style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+        }];
+        [alertController addAction:settingAct];
+        [self.navigationController presentViewController:alertController animated:YES completion:nil];
     } else if (authStatus == AVAuthorizationStatusNotDetermined) {
         // fix issue 466, 防止用户首次拍照拒绝授权时相机页黑屏
         [AVCaptureDevice requestAccessForMediaType:AVMediaTypeVideo completionHandler:^(BOOL granted) {
@@ -969,24 +715,10 @@ static CGFloat itemMargin = 5;
     _previewButton.enabled = tzImagePickerVc.selectedModels.count > 0;
     _doneButton.enabled = tzImagePickerVc.selectedModels.count > 0 || tzImagePickerVc.alwaysEnableDoneBtn;
     
-//    _numberImageView.hidden = tzImagePickerVc.selectedModels.count <= 0;
-//    _numberLabel.hidden = tzImagePickerVc.selectedModels.count <= 0;
-//    _numberLabel.text = [NSString stringWithFormat:@"%zd",tzImagePickerVc.selectedModels.count];
-    if ((long)tzImagePickerVc.maxImagesCount > 1) {
-        if (tzImagePickerVc.selectedModels.count == 0) {
-            [_doneButton setTitle:[NSString stringWithFormat:@"完成(%ld/%ld)",tzImagePickerVc.selectedModels.count,(long)tzImagePickerVc.maxImagesCount] forState: UIControlStateDisabled];
-        } else {
-            [_doneButton setTitle:[NSString stringWithFormat:@"完成(%ld/%ld)",tzImagePickerVc.selectedModels.count,(long)tzImagePickerVc.maxImagesCount] forState:UIControlStateNormal];
-        }
-        if(tzImagePickerVc.selectedModels.count > 0) {
-            _doneButton.backgroundColor = tzImagePickerVc.oKButtonBackGroundColorEnabled;
-        } else {
-            _doneButton.backgroundColor = tzImagePickerVc.oKButtonBackGroundColorDisabled;
-        }
-    } else {
-        [_doneButton setTitle:@"完成" forState:UIControlStateNormal];
-        _doneButton.backgroundColor = tzImagePickerVc.oKButtonBackGroundColorEnabled;
-    }
+    _numberImageView.hidden = tzImagePickerVc.selectedModels.count <= 0;
+    _numberLabel.hidden = tzImagePickerVc.selectedModels.count <= 0;
+    _numberLabel.text = [NSString stringWithFormat:@"%zd",tzImagePickerVc.selectedModels.count];
+    
     _originalPhotoButton.enabled = tzImagePickerVc.selectedModels.count > 0;
     _originalPhotoButton.selected = (_isSelectOriginalPhoto && _originalPhotoButton.enabled);
     _originalPhotoLabel.hidden = (!_originalPhotoButton.isSelected);
@@ -1057,9 +789,10 @@ static CGFloat itemMargin = 5;
 }
 
 - (void)checkSelectedModels {
-    NSMutableArray *selectedAssets = [NSMutableArray array];
     TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
-    for (TZAssetModel *model in tzImagePickerVc.selectedModels) {
+    NSArray *selectedModels = tzImagePickerVc.selectedModels;
+    NSMutableSet *selectedAssets = [NSMutableSet setWithCapacity:selectedModels.count];
+    for (TZAssetModel *model in selectedModels) {
         [selectedAssets addObject:model.asset];
     }
     for (TZAssetModel *model in _models) {
@@ -1067,14 +800,6 @@ static CGFloat itemMargin = 5;
         if ([selectedAssets containsObject:model.asset]) {
             model.isSelected = YES;
         }
-    }
-}
-
-#pragma mark - UIAlertViewDelegate
-
-- (void)alertView:(UIAlertView *)alertView clickedButtonAtIndex:(NSInteger)buttonIndex {
-    if (buttonIndex == 1) { // 去设置界面，开启相机访问权限
-        [[UIApplication sharedApplication] openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
     }
 }
 
@@ -1087,8 +812,9 @@ static CGFloat itemMargin = 5;
         TZImagePickerController *imagePickerVc = (TZImagePickerController *)self.navigationController;
         [imagePickerVc showProgressHUD];
         UIImage *photo = [info objectForKey:UIImagePickerControllerOriginalImage];
+        NSDictionary *meta = [info objectForKey:UIImagePickerControllerMediaMetadata];
         if (photo) {
-            [[TZImageManager manager] savePhotoWithImage:photo location:self.location completion:^(PHAsset *asset, NSError *error){
+            [[TZImageManager manager] savePhotoWithImage:photo meta:meta location:self.location completion:^(PHAsset *asset, NSError *error){
                 if (!error) {
                     [self addPHAsset:asset];
                 }
@@ -1128,67 +854,23 @@ static CGFloat itemMargin = 5;
             } else {
                 photoPreviewVc.currentIndex = 0;
             }
-            if (tzImagePickerVc.maxImagesCount <= 1) {
-                if (tzImagePickerVc.shouldPick) {
-                    TZAssetModel *asset;
-                    if (tzImagePickerVc.sortAscendingByModificationDate) {
-                        asset = _models[_models.count - 1];
-                    } else {
-                        asset = _models[0];
-                    }
-                    [[TZImageManager manager] getOriginalPhotoWithAsset:asset.asset completion:^(UIImage *photo, NSDictionary *info) {
-                        LZImageCropping *imageBrowser = [[LZImageCropping alloc]init];
-                        TZImagePickerController *tzImagePickerVc = (TZImagePickerController *)self.navigationController;
-                        //设置代理
-                        imageBrowser.delegate = self;
-                        if (tzImagePickerVc.isSquare) {
-                            if (tzImagePickerVc.clipSize.height > 0 && tzImagePickerVc.clipSize.width > 0) {
-                                CGFloat clipR = MIN(tzImagePickerVc.clipSize.height, tzImagePickerVc.clipSize.width);
-                                imageBrowser.cropSize  = CGSizeMake(clipR, clipR);
-                            } else {
-                                imageBrowser.cropSize = CGSizeMake(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.width / 2.0);
-                            }
-                        } else {
-                            if (tzImagePickerVc.clipSize.height > 0 && tzImagePickerVc.clipSize.width > 0) {
-                                imageBrowser.cropSize  = tzImagePickerVc.clipSize;
-                            } else {
-                                imageBrowser.cropSize = CGSizeMake(UIScreen.mainScreen.bounds.size.width, UIScreen.mainScreen.bounds.size.width / 2.0);
-                            }
-                        }
-                        imageBrowser.titleLabel.text = tzImagePickerVc.topTitle;
-                        [imageBrowser setImage:photo];
-                        //设置自定义裁剪区域大小
-                        //是否需要圆形
-                        imageBrowser.isRound = NO;
-                        if (_mainColor) {
-                            imageBrowser.mainColor = _mainColor;
-                        }
-                        [self presentViewController:imageBrowser animated:YES completion:nil];
-                    }];
-                } else {
-                    if (tzImagePickerVc.allowCrop) {
-                        TZPhotoPreviewController *photoPreviewVc = [[TZPhotoPreviewController alloc] init];
-                        if (tzImagePickerVc.sortAscendingByModificationDate) {
-                            photoPreviewVc.currentIndex = _models.count - 1;
-                        } else {
-                            photoPreviewVc.currentIndex = 0;
-                        }
-                        photoPreviewVc.models = _models;
-                        [self pushPhotoPrevireViewController:photoPreviewVc];
-                    } else {
-                        [tzImagePickerVc.selectedModels addObject:assetModel];
-                        [self doneButtonClick];
-                    }
-                }
-                return;
-            }
+            photoPreviewVc.models = _models;
+            [self pushPhotoPrevireViewController:photoPreviewVc];
+        } else {
+            [tzImagePickerVc addSelectedModel:assetModel];
+            [self doneButtonClick];
         }
+        return;
     }
+    
     if (tzImagePickerVc.selectedModels.count < tzImagePickerVc.maxImagesCount) {
-        assetModel.isSelected = YES;
-        [tzImagePickerVc.selectedModels addObject:assetModel];
-        [tzImagePickerVc.selectedAssetIds addObject:assetModel.asset.localIdentifier];
-        [self refreshBottomToolBarStatus];
+        if (assetModel.type == TZAssetModelMediaTypeVideo && !tzImagePickerVc.allowPickingMultipleVideo) {
+            // 不能多选视频的情况下，不选中拍摄的视频
+        } else {
+            assetModel.isSelected = YES;
+            [tzImagePickerVc addSelectedModel:assetModel];
+            [self refreshBottomToolBarStatus];
+        }
     }
     _collectionView.hidden = YES;
     [_collectionView reloadData];
@@ -1202,6 +884,7 @@ static CGFloat itemMargin = 5;
 }
 
 - (void)dealloc {
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
     // NSLog(@"%@ dealloc",NSStringFromClass(self.class));
 }
 
